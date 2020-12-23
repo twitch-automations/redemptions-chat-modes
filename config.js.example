@@ -1,0 +1,21 @@
+// https://twitchtokengenerator.com/
+export const config = {
+  clientId: 'xxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+  accessToken: 'xxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+  refreshToken: 'xxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+  channelName: 'xxxxxxxx',
+  rewards: {
+    emoteOnly: {
+      rewardName: 'Emote Only Mode',
+      rewardDurationInSeconds: 60
+    },
+    followerOnly: {
+      rewardName: 'Follower Only Mode',
+      rewardDurationInSeconds: 60
+    },
+    subscriberOnly: {
+      rewardName: 'Subscriber Only Mode',
+      rewardDurationInSeconds: 60
+    }
+  }
+};
