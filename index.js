@@ -38,22 +38,20 @@ let currentChatMode = null;
 let queue = [];
 
 function processRedempton(message) {
-	console.log(message.rewardName + ' redeemed by ' + message.userDisplayName);
-
-	if(message.rewardName == 'Emote Only Mode') {
-    currentChatMode = 'Emote Only Mode';
+	if(message.rewardName == 'Emote Only Mode' && (currentChatMode === 'emoteOnly' || currentChatMode === null)) {
+    currentChatMode = 'emoteOnly';
     processRoomMode('emoteOnly', message)
 	}	else
-	if(message.rewardName == 'Follower Only Mode') {
-		currentChatMode = 'Follower Only Mode';
+	if(message.rewardName == 'Follower Only Mode' && (currentChatMode === 'followerOnly' || currentChatMode === null)) {
+		currentChatMode = 'followerOnly';
     processRoomMode('followerOnly', message)
 	}	else
-	if(message.rewardName == 'Subscriber Only Mode') {
-		currentChatMode = 'Subscriber Only Mode';
+	if(message.rewardName == 'Subscriber Only Mode' && (currentChatMode === 'subscriberOnly' || currentChatMode === null)) {
+		currentChatMode = 'subscriberOnly';
     processRoomMode('subscriberOnly', message)
 	}	
 	else {
-		queue.push(message.rewardName);
+		queue.push(message);
 		console.log(message.rewardName + ' added to the queue');
 	}
 }
@@ -64,6 +62,19 @@ function replaceTemplates(twitchMessage, modeMessage, rewardDuration, time_remai
 	processedString = processedString.replace('{{ time_remaining }}', time_remaining);
 	processedString = processedString.replace('{{ reward_duration }}', rewardDuration);
 	return processedString;
+}
+
+function processQueue() {
+  if(queue.length === 0) {
+    console.log('Queue is empty, waiting for redemptions...');
+  } else {
+    console.log('Processing the queue...');
+    let processQueue = [...queue];
+    queue = [];
+    processQueue.forEach((message, idx) => {
+      processRedempton(message);
+    });
+  }
 }
 
 function processRoomMode(mode, message) {
@@ -94,9 +105,11 @@ function processRoomMode(mode, message) {
 				intervals[mode] = null;
 				chatClient.disableEmoteOnly(channelName);
 				endMessage = replaceTemplates(message, messages[mode].endMessage, 
-					config.rewards[mode].rewardDurationInSeconds, timers[mode])
+          config.rewards[mode].rewardDurationInSeconds, timers[mode])
+        currentChatMode = null;
         chatClient.say(channelName, endMessage)
         console.log(channelName, endMessage);
+        processQueue();
 			}
 		},1000);
 	}
