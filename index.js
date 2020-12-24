@@ -38,15 +38,15 @@ let currentChatMode = null;
 let queue = [];
 
 function processRedempton(message) {
-	if(message.rewardName == 'Emote Only Mode' && (currentChatMode === 'emoteOnly' || currentChatMode === null)) {
+	if(message.rewardName === config.rewards.emoteOnly.rewardName && (currentChatMode === 'emoteOnly' || currentChatMode === null)) {
     currentChatMode = 'emoteOnly';
     processRoomMode('emoteOnly', message)
 	}	else
-	if(message.rewardName == 'Follower Only Mode' && (currentChatMode === 'followerOnly' || currentChatMode === null)) {
+	if(message.rewardName === config.rewards.followerOnly.rewardName && (currentChatMode === 'followerOnly' || currentChatMode === null)) {
 		currentChatMode = 'followerOnly';
     processRoomMode('followerOnly', message)
 	}	else
-	if(message.rewardName == 'Subscriber Only Mode' && (currentChatMode === 'subscriberOnly' || currentChatMode === null)) {
+	if(message.rewardName === config.rewards.subscriberOnly.rewardName && (currentChatMode === 'subscriberOnly' || currentChatMode === null)) {
 		currentChatMode = 'subscriberOnly';
     processRoomMode('subscriberOnly', message)
 	}	
@@ -126,5 +126,5 @@ const listenerRedemption = await pubSubClient.onRedemption(userId, (message) => 
 	processRedempton(message);
 });
 
-console.log('Waiting for chatroom redemptions');
+console.log('Waiting for chatroom redemptions...');
 
