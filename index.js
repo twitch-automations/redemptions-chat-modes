@@ -6,6 +6,7 @@ import { PubSubClient } from 'twitch-pubsub-client';
 import { StaticAuthProvider } from 'twitch-auth';
 import { ChatClient } from 'twitch-chat-client';
 import { config } from './config.js';
+import { messages } from './messages.js';
 
 const clientId = config.clientId;
 const accessToken = config.accessToken;
@@ -33,26 +34,7 @@ let intervals = {
 	subscriberOnly: null
 };
 
-const messages = {
-  emoteOnly: {
-    startMessage: '{{ user_display_name }} has enabled emote only mode!',
-    remainingMessage: '{{ time_remaining }} seconds left follower only mode!',
-		addMessage: '{{ user_display_name }} added {{ reward_duration }} seconds to emote only mode',
-    endMessage: 'Emote only mode disabled'
-  },
-  followerOnly: {
-    startMessage: '{{ user_display_name }} has enabled follower only mode!',
-    remainingMessage: '{{ time_remaining }} seconds left follower only mode!',
-		addMessage: '{{ user_display_name }} added {{ reward_duration }} seconds to subscriber only mode',
-    endMessage: 'Follower mode disabled'
-  },
-  subscriberOnly: {
-    startMessage: '{{ user_display_name }} has enabled subscriber only only mode!',
-		remainingMessage: '{{ time_remaining }} seconds left subscriber only mode!',
-		addMessage: '{{ user_display_name }} added {{ reward_duration }} seconds to subscriber only mode',
-    endMessage: 'Subscriber mode disabled'
-  }
-};
+
 
 let currentChatMode = null;
 let queue = [];
@@ -212,3 +194,5 @@ function subscriberOnlyMode(message) {
 const listenerRedemption = await pubSubClient.onRedemption(userId, (message) => {
 	processRedempton(message);
 });
+
+console.log('Waiting for chatroom redemptions');
