@@ -1,0 +1,6 @@
+version: '3'
+services:
+  chat_modes:
+    image: redemption_chat_modes
+    volumes: 
+      - /Users/netimp/twitch-automations/redemptions-chat-modes:/usr/src/app
