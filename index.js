@@ -35,18 +35,21 @@ let intervals = {
 
 const messages = {
   emoteOnly: {
-    startMessage: ' has enabled emote only mode!',
-    remainingMessage: ' seconds left follower only mode!',
+    startMessage: '{{ user_display_name }} has enabled emote only mode!',
+    remainingMessage: '{{ time_remaining }} seconds left follower only mode!',
+		addMessage: '{{ user_display_name }} added {{ reward_duration }} seconds to emote only mode',
     endMessage: 'Emote only mode disabled'
   },
   followerOnly: {
-    startMessage: ' has enabled follower only mode!',
-    remainingMessage: ' seconds left follower only mode!',
+    startMessage: '{{ user_display_name }} has enabled follower only mode!',
+    remainingMessage: '{{ time_remaining }} seconds left follower only mode!',
+		addMessage: '{{ user_display_name }} added {{ reward_duration }} seconds to subscriber only mode',
     endMessage: 'Follower mode disabled'
   },
   subscriberOnly: {
-    startMessage: ' has enabled subscriber only only mode!',
-    remainingMessage: ' seconds left follower only mode!',
+    startMessage: '{{ user_display_name }} has enabled subscriber only only mode!',
+		remainingMessage: '{{ time_remaining }} seconds left subscriber only mode!',
+		addMessage: '{{ user_display_name }} added {{ reward_duration }} seconds to subscriber only mode',
     endMessage: 'Subscriber mode disabled'
   }
 };
@@ -54,8 +57,16 @@ const messages = {
 let currentChatMode = null;
 let queue = [];
 
+function replaceTemplates(twitchMessage, modeMessage, rewardDuration, time_remaining) {
+	let processedString = modeMessage;
+	processedString = processedString.replace('{{ user_display_name }}', twitchMessage.userDisplayName);
+	processedString = processedString.replace('{{ time_remaining }}', time_remaining);
+	processedString = processedString.replace('{{ reward_duration }}', rewardDuration);
+	return processedString;
+}
+
 function processRedempton(message) {
-	console.log(message.rewardName + ' redeemed...');
+	console.log(message.rewardName + ' redeemed by ' + message.userDisplayName);
 
 	if(message.rewardName == 'Emote Only Mode') {
 		currentChatMode = 'Emote Only Mode';
@@ -76,85 +87,125 @@ function processRedempton(message) {
 }
 
 function emoteOnlyMode(message) {
+	let startMessage = '',
+			endMessage = '',
+			addMessage = '', 
+	    remainMessage = '';
+
 	timers.emoteOnly += config.rewards.emoteOnly.rewardDurationInSeconds;
 	if(intervals.emoteOnly === null) {
-    console.log(message.userDisplayName + messages.emoteOnly.startMessage);
-    chatClient.say(channelName, message.userDisplayName + messages.emoteOnly.startMessage);
+		startMessage = replaceTemplates(message, messages.emoteOnly.startMessage, 
+				config.rewards.emoteOnly.rewardDurationInSeconds, timers.emoteOnly)
+		console.log(startMessage);
+    chatClient.say(channelName, startMessage);
 		chatClient.enableEmoteOnly(channelName);
+
 		intervals.emoteOnly = setInterval(function() {
 			timers.emoteOnly--;
 			if((timers.emoteOnly % rewards.emoteOnly.rewardDurationInSeconds) === 0 && timers.emoteOnly !== 0) {
-				console.log(timers.emoteOnly + messages.emoteOnly.remainingMessage);
-				chatClient.say(channelName,  timers.emoteOnly + messages.emoteOnly.remainingMessage);
+				remainMessage = replaceTemplates(message, messages.emoteOnly.remainingMessage, 
+					config.rewards.emoteOnly.rewardDurationInSeconds, timers.emoteOnly)
+				console.log(remainMessage);
+				chatClient.say(channelName, remainMessage);
 			}else 
 			if (timers.emoteOnly === 0) {
 				clearInterval(intervals.emoteOnly);
 				intervals.emoteOnly = null;
 				chatClient.disableEmoteOnly(channelName);
-        chatClient.say(channelName,  messages.emoteOnly.endMessage)
-        console.log(channelName, messages.emoteOnly.endMessage);
+				endMessage = replaceTemplates(message, messages.emoteOnly.endMessage, 
+					config.rewards.emoteOnly.rewardDurationInSeconds, timers.emoteOnly)
+        chatClient.say(channelName, endMessage)
+        console.log(channelName, endMessage);
 			}
 		},1000);
 	}
 	else
 	{
-		console.log(config.rewards.emoteOnly.rewardDurationInSeconds + ' seconds added in emote only mode timer by ' + message.userDisplayName);
-		chatClient.say(channelName, config.rewards.emoteOnly.rewardDurationInSeconds + ' seconds added in emote only mode timer by ' + message.userDisplayName);
+		addMessage = replaceTemplates(message, messages.emoteOnly.addMessage, 
+			config.rewards.emoteOnly.rewardDurationInSeconds, timers.emoteOnly)
+		chatClient.say(channelName, addMessage)
 	}    
 }
 
 function followerOnlyMode(message) {
+	let startMessage = '',
+			endMessage = '',
+			addMessage = '', 
+	    remainMessage = '';
+
 	timers.followerOnly += config.rewards.followerOnly.rewardDurationInSeconds;
 	if(intervals.followerOnly === null) {
-    console.log(message.userDisplayName + messages.followerOnly.startMessage);
-    chatClient.say(channelName, message.userDisplayName + messages.followerOnly.startMessage);
+		startMessage = replaceTemplates(message, messages.followerOnly.startMessage, 
+			config.rewards.followerOnly.rewardDurationInSeconds, timers.followerOnly)
+		console.log(startMessage);
+		chatClient.say(channelName, startMessage);
 		chatClient.enableFollowersOnly(channelName);
 		intervals.followerOnly = setInterval(function() {
 			timers.followerOnly--;
 			if((timers.followerOnly % rewards.followerOnly.rewardDurationInSeconds) === 0 && timers.followerOnly !== 0) {
-				console.log(timers.followerOnly + messages.followerOnly.remainingMessage);
-				chatClient.say(channelName,  timers.followerOnly + messages.followerOnly.remainingMessage);
+				remainMessage = replaceTemplates(message, messages.followerOnly.remainingMessage, 
+					config.rewards.followerOnly.rewardDurationInSeconds, timers.followerOnly)
+				console.log(remainMessage);
+				chatClient.say(channelName, remainMessage);
       }
-			if (timers.followerOnly < 0) {
+			if (timers.followerOnly === 0) {
 				clearInterval(intervals.followerOnly);
 				intervals.followerOnly = null;
 				chatClient.enableFollowersOnly(channelName);
-        chatClient.say(channelName, messages.followerOnly.endMessage)
-        console.log(messages.followerOnly.endMessage);
+				endMessage = replaceTemplates(message, messages.followerOnly.endMessage, 
+					config.rewards.followerOnly.rewardDurationInSeconds, timers.followerOnly)
+        chatClient.say(channelName, endMessage)
+        console.log(channelName, endMessage);
 			}
 		},1000);
 	}
 	else
 	{
-		console.log(config.rewards.followerOnly.rewardDurationInSeconds + ' seconds added in follower only mode timer by ' + message.userDisplayName);
-		chatClient.say(channelName, config.rewards.followerOnly.rewardDurationInSeconds + ' seconds added in follower only mode timer by ' + message.userDisplayName);
+		addMessage = replaceTemplates(message, messages.followerOnly.addMessage, 
+			config.rewards.followerOnly.rewardDurationInSeconds, timers.emoteOnly)
+		chatClient.say(channelName, addMessage)
 	}    
 }
 
 function subscriberOnlyMode(message) {
+	let startMessage = '',
+			endMessage = '',
+			addMessage = '', 
+	    remainMessage = '';
+
 	timers.subscriberOnly += config.rewards.subscriberOnly.rewardDurationInSeconds;
 	if(intervals.subscriberOnly === null) {
-		console.log('Subscriber Only Mode Enabled');
+		startMessage = replaceTemplates(message, messages.subscriberOnly.startMessage, 
+			config.rewards.subscriberOnly.rewardDurationInSeconds, timers.followerOnly)
+		console.log(startMessage);
+		chatClient.say(channelName, startMessage);
+
 		chatClient.enableSubsOnly(channelName);
 		intervals.subscriberOnly = setInterval(function() {
 			timers.subscriberOnly--;
 			if((timers.subscriberOnly % rewards.subscriberOnly.rewardDurationInSeconds) === 0 && timers.subscriberOnly !== 0) {
-				console.log(timers.subscriberOnly + messages.subscriberOnly.remainingMessage);
-				chatClient.say(channelName,  timers.subscriberOnly + messages.subscriberOnly.remainingMessage);
+				remainMessage = replaceTemplates(message, messages.subscriberOnly.remainingMessage, 
+					config.rewards.subscriberOnly.rewardDurationInSeconds, timers.subscriberOnly)
+				console.log(remainMessage);
+				chatClient.say(channelName, remainMessage);
 			}
-			if (timers.subscriberOnly < 0) {
+			if (timers.subscriberOnly === 0) {
 				clearInterval(intervals.subscriberOnly);
 				intervals.subscriberOnly = null;
 				chatClient.disableSubsOnly(channelName);
-        chatClient.say(channelName, messages.subscriberOnly.endMessage)
-        console.log(messages.subscriberOnly.endMessage);
+				endMessage = replaceTemplates(message, messages.subscriberOnly.endMessage, 
+					config.rewards.subscriberOnly.rewardDurationInSeconds, timers.subscriberOnly)
+        chatClient.say(channelName, endMessage)
+        console.log(channelName, endMessage);
+
 			}
 		},1000);
 	}
 	else
 	{
-		console.log(config.rewards.subscriberOnly.rewardDurationInSeconds + ' seconds added in subscriber only mode timer');
-		chatClient.say(channelName, rewardconfig.rewards.subscriberOnly.rewardDurationInSecondsTimerInteravalInSeconds + ' seconds added in subscriber only mode timer');
+		addMessage = replaceTemplates(message, messages.subscriberOnly.addMessage, 
+			config.rewards.subscriberOnly.rewardDurationInSeconds, timers.subscriberOnly)
+		chatClient.say(channelName, addMessage)
 	}    
 }
 
