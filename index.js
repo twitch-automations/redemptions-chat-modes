@@ -34,10 +34,29 @@ let intervals = {
 	subscriberOnly: null
 };
 
-
-
 let currentChatMode = null;
 let queue = [];
+
+function processRedempton(message) {
+	console.log(message.rewardName + ' redeemed by ' + message.userDisplayName);
+
+	if(message.rewardName == 'Emote Only Mode') {
+    currentChatMode = 'Emote Only Mode';
+    processRoomMode('emoteOnly', message)
+	}	else
+	if(message.rewardName == 'Follower Only Mode') {
+		currentChatMode = 'Follower Only Mode';
+    processRoomMode('followerOnly', message)
+	}	else
+	if(message.rewardName == 'Subscriber Only Mode') {
+		currentChatMode = 'Subscriber Only Mode';
+    processRoomMode('subscriberOnly', message)
+	}	
+	else {
+		queue.push(message.rewardName);
+		console.log(message.rewardName + ' added to the queue');
+	}
+}
 
 function replaceTemplates(twitchMessage, modeMessage, rewardDuration, time_remaining) {
 	let processedString = modeMessage;
@@ -47,55 +66,35 @@ function replaceTemplates(twitchMessage, modeMessage, rewardDuration, time_remai
 	return processedString;
 }
 
-function processRedempton(message) {
-	console.log(message.rewardName + ' redeemed by ' + message.userDisplayName);
-
-	if(message.rewardName == 'Emote Only Mode') {
-		currentChatMode = 'Emote Only Mode';
-		emoteOnlyMode(message);
-	}	else
-	if(message.rewardName == 'Follower Only Mode') {
-		currentChatMode = 'Follower Only Mode';
-		followerOnlyMode(message);
-	}	else
-	if(message.rewardName == 'Subscriber Only Mode') {
-		currentChatMode = 'Subscriber Only Mode';
-		subscriberOnlyMode(message);
-	}	
-	else {
-		queue.push(message.rewardName);
-		console.log(message.rewardName + ' added to the queue');
-	}
-}
-
-function emoteOnlyMode(message) {
+function processRoomMode(mode, message) {
 	let startMessage = '',
 			endMessage = '',
 			addMessage = '', 
 	    remainMessage = '';
 
-	timers.emoteOnly += config.rewards.emoteOnly.rewardDurationInSeconds;
-	if(intervals.emoteOnly === null) {
-		startMessage = replaceTemplates(message, messages.emoteOnly.startMessage, 
-				config.rewards.emoteOnly.rewardDurationInSeconds, timers.emoteOnly)
+  timers[mode] += config.rewards[mode].rewardDurationInSeconds;
+  
+	if(intervals[mode] === null) {
+		startMessage = replaceTemplates(message, messages[mode].startMessage, 
+				config.rewards[mode].rewardDurationInSeconds, timers[mode])
 		console.log(startMessage);
     chatClient.say(channelName, startMessage);
 		chatClient.enableEmoteOnly(channelName);
 
-		intervals.emoteOnly = setInterval(function() {
-			timers.emoteOnly--;
-			if((timers.emoteOnly % rewards.emoteOnly.rewardDurationInSeconds) === 0 && timers.emoteOnly !== 0) {
-				remainMessage = replaceTemplates(message, messages.emoteOnly.remainingMessage, 
-					config.rewards.emoteOnly.rewardDurationInSeconds, timers.emoteOnly)
+		intervals[mode] = setInterval(function() {
+			timers[mode]--;
+			if((timers[mode] % rewards[mode].rewardDurationInSeconds) === 0 && timers[mode] !== 0) {
+				remainMessage = replaceTemplates(message, messages[mode].remainingMessage, 
+					config.rewards[mode].rewardDurationInSeconds, timers[mode])
 				console.log(remainMessage);
 				chatClient.say(channelName, remainMessage);
 			}else 
-			if (timers.emoteOnly === 0) {
-				clearInterval(intervals.emoteOnly);
-				intervals.emoteOnly = null;
+			if (timers[mode] === 0) {
+				clearInterval(intervals[mode]);
+				intervals[mode] = null;
 				chatClient.disableEmoteOnly(channelName);
-				endMessage = replaceTemplates(message, messages.emoteOnly.endMessage, 
-					config.rewards.emoteOnly.rewardDurationInSeconds, timers.emoteOnly)
+				endMessage = replaceTemplates(message, messages[mode].endMessage, 
+					config.rewards[mode].rewardDurationInSeconds, timers[mode])
         chatClient.say(channelName, endMessage)
         console.log(channelName, endMessage);
 			}
@@ -103,90 +102,9 @@ function emoteOnlyMode(message) {
 	}
 	else
 	{
-		addMessage = replaceTemplates(message, messages.emoteOnly.addMessage, 
-			config.rewards.emoteOnly.rewardDurationInSeconds, timers.emoteOnly)
-		chatClient.say(channelName, addMessage)
-	}    
-}
-
-function followerOnlyMode(message) {
-	let startMessage = '',
-			endMessage = '',
-			addMessage = '', 
-	    remainMessage = '';
-
-	timers.followerOnly += config.rewards.followerOnly.rewardDurationInSeconds;
-	if(intervals.followerOnly === null) {
-		startMessage = replaceTemplates(message, messages.followerOnly.startMessage, 
-			config.rewards.followerOnly.rewardDurationInSeconds, timers.followerOnly)
-		console.log(startMessage);
-		chatClient.say(channelName, startMessage);
-		chatClient.enableFollowersOnly(channelName);
-		intervals.followerOnly = setInterval(function() {
-			timers.followerOnly--;
-			if((timers.followerOnly % rewards.followerOnly.rewardDurationInSeconds) === 0 && timers.followerOnly !== 0) {
-				remainMessage = replaceTemplates(message, messages.followerOnly.remainingMessage, 
-					config.rewards.followerOnly.rewardDurationInSeconds, timers.followerOnly)
-				console.log(remainMessage);
-				chatClient.say(channelName, remainMessage);
-      }
-			if (timers.followerOnly === 0) {
-				clearInterval(intervals.followerOnly);
-				intervals.followerOnly = null;
-				chatClient.enableFollowersOnly(channelName);
-				endMessage = replaceTemplates(message, messages.followerOnly.endMessage, 
-					config.rewards.followerOnly.rewardDurationInSeconds, timers.followerOnly)
-        chatClient.say(channelName, endMessage)
-        console.log(channelName, endMessage);
-			}
-		},1000);
-	}
-	else
-	{
-		addMessage = replaceTemplates(message, messages.followerOnly.addMessage, 
-			config.rewards.followerOnly.rewardDurationInSeconds, timers.emoteOnly)
-		chatClient.say(channelName, addMessage)
-	}    
-}
-
-function subscriberOnlyMode(message) {
-	let startMessage = '',
-			endMessage = '',
-			addMessage = '', 
-	    remainMessage = '';
-
-	timers.subscriberOnly += config.rewards.subscriberOnly.rewardDurationInSeconds;
-	if(intervals.subscriberOnly === null) {
-		startMessage = replaceTemplates(message, messages.subscriberOnly.startMessage, 
-			config.rewards.subscriberOnly.rewardDurationInSeconds, timers.followerOnly)
-		console.log(startMessage);
-		chatClient.say(channelName, startMessage);
-
-		chatClient.enableSubsOnly(channelName);
-		intervals.subscriberOnly = setInterval(function() {
-			timers.subscriberOnly--;
-			if((timers.subscriberOnly % rewards.subscriberOnly.rewardDurationInSeconds) === 0 && timers.subscriberOnly !== 0) {
-				remainMessage = replaceTemplates(message, messages.subscriberOnly.remainingMessage, 
-					config.rewards.subscriberOnly.rewardDurationInSeconds, timers.subscriberOnly)
-				console.log(remainMessage);
-				chatClient.say(channelName, remainMessage);
-			}
-			if (timers.subscriberOnly === 0) {
-				clearInterval(intervals.subscriberOnly);
-				intervals.subscriberOnly = null;
-				chatClient.disableSubsOnly(channelName);
-				endMessage = replaceTemplates(message, messages.subscriberOnly.endMessage, 
-					config.rewards.subscriberOnly.rewardDurationInSeconds, timers.subscriberOnly)
-        chatClient.say(channelName, endMessage)
-        console.log(channelName, endMessage);
-
-			}
-		},1000);
-	}
-	else
-	{
-		addMessage = replaceTemplates(message, messages.subscriberOnly.addMessage, 
-			config.rewards.subscriberOnly.rewardDurationInSeconds, timers.subscriberOnly)
+		addMessage = replaceTemplates(message, messages[mode].addMessage, 
+      config.rewards[mode].rewardDurationInSeconds, timers[mode]);
+    console.log(addMessage);
 		chatClient.say(channelName, addMessage)
 	}    
 }
@@ -196,3 +114,4 @@ const listenerRedemption = await pubSubClient.onRedemption(userId, (message) => 
 });
 
 console.log('Waiting for chatroom redemptions');
+
