@@ -127,4 +127,3 @@ const listenerRedemption = await pubSubClient.onRedemption(userId, (message) => 
 });
 
 console.log('Waiting for chatroom redemptions...');
-
