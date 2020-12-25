@@ -77,6 +77,31 @@ function processQueue() {
   }
 }
 
+function enableDisableMode(type, mode) {
+	if(type === 'enable') {
+		if(mode === 'emoteOnly') {
+			chatClient.enableEmoteOnly(channelName);
+		} else
+		if(mode === 'followerOnly') {
+			chatClient.enableFollowersOnly(channelName);
+		} else 
+		if(mode === 'subscriberOnly') {
+			chatClient.enableSubsOnly(channelName);
+		}
+	}
+	else if (type === 'disable') {
+		if(mode === 'emoteOnly') {
+			chatClient.disableEmoteOnly(channelName);
+		} else
+		if(mode === 'followerOnly') {
+			chatClient.disableFollowersOnly(channelName);
+		} else 
+		if(mode === 'subscriberOnly') {
+			chatClient.disableSubsOnly(channelName);
+		}
+	}
+}
+
 function processRoomMode(mode, message) {
 	let startMessage = '',
 			endMessage = '',
@@ -89,8 +114,8 @@ function processRoomMode(mode, message) {
 		startMessage = replaceTemplates(message, messages[mode].startMessage, 
 				config.rewards[mode].rewardDurationInSeconds, timers[mode])
 		console.log(startMessage);
-    chatClient.say(channelName, startMessage);
-		chatClient.enableEmoteOnly(channelName);
+		chatClient.say(channelName, startMessage);
+		enableDisableMode('enable', mode);
 
 		intervals[mode] = setInterval(function() {
 			timers[mode]--;
@@ -103,7 +128,7 @@ function processRoomMode(mode, message) {
 			if (timers[mode] === 0) {
 				clearInterval(intervals[mode]);
 				intervals[mode] = null;
-				chatClient.disableEmoteOnly(channelName);
+				enableDisableMode('disable', mode);
 				endMessage = replaceTemplates(message, messages[mode].endMessage, 
           config.rewards[mode].rewardDurationInSeconds, timers[mode])
         currentChatMode = null;
